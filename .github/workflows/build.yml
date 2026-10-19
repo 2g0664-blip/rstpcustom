@@ -12,77 +12,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install system dependencies
+      - name: Build with Kivy Buildozer Docker
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            git \
-            ffmpeg \
-            libsdl2-dev \
-            libsdl2-image-dev \
-            libsdl2-mixer-dev \
-            libsdl2-ttf-dev \
-            libportmidi-dev \
-            libswscale-dev \
-            libavformat-dev \
-            libavcodec-dev \
-            zlib1g-dev \
-            libgstreamer1.0 \
-            gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good \
-            libpng-dev \
-            libjpeg-dev \
-            openjdk-17-jdk \
-            zip \
-            unzip \
-            autoconf \
-            libtool \
-            pkg-config
+          docker run --rm -v "$PWD":/home/user/hostcwd kivy/buildozer-action:latest \
+            bash -c "cd /home/user/hostcwd && buildozer android debug"
 
-      - name: Install Buildozer
-        run: |
-          pip install --upgrade pip
-          pip install --upgrade buildozer cython
-          pip install --upgrade git+https://github.com/kivy/python-for-android.git@master
-
-      - name: Build APK with Buildozer
-        run: |
-          yes | buildozer android debug
-        env:
-          ANDROID_SDK_ROOT: /opt/android-sdk
-          ANDROID_NDK_HOME: /opt/android-sdk/ndk
-
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: RTSP-Camera-APK
           path: bin/*.apk
 
       - name: Create Release
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           files: bin/*.apk
           tag_name: v1.0.${{ github.run_number }}
           name: RTSP Camera v1.0.${{ github.run_number }}
           body: |
-            ## RTSP Camera App
+            ## RTSP Camera App - Download APK Below
             
             Custom RTSP/RTP-JPEG decoder for Android
             
-            **Installation:**
-            1. Download the APK below
-            2. Enable "Install from Unknown Sources"
-            3. Install APK
-            4. Connect to camera WiFi (192.168.1.1)
-            5. Open app and tap Connect
-            
-            **Camera:** 192.168.1.1:7070/webcam
+            **Install:**
+            1. Download APK
+            2. Enable Unknown Sources
+            3. Install
+            4. Connect to 192.168.1.1
+            5. Tap Connect
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
