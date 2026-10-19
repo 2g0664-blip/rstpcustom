@@ -1,0 +1,49 @@
+name: Build Android APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build APK with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          command: buildozer android debug
+          buildozer_version: stable
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: RTSP-Camera-APK
+          path: bin/*.apk
+
+      - name: Create Release
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: bin/*.apk
+          tag_name: v1.0.${{ github.run_number }}
+          name: RTSP Camera v1.0.${{ github.run_number }}
+          body: |
+            ## RTSP Camera App
+            
+            Custom RTSP/RTP-JPEG decoder for Android
+            
+            **Installation:**
+            1. Download the APK below
+            2. Enable "Install from Unknown Sources"
+            3. Install APK
+            4. Connect to camera WiFi (192.168.1.1)
+            5. Open app and tap Connect
+            
+            **Camera:** 192.168.1.1:7070/webcam
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
