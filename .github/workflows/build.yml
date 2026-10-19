@@ -10,24 +10,62 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            git \
+            ffmpeg \
+            libsdl2-dev \
+            libsdl2-image-dev \
+            libsdl2-mixer-dev \
+            libsdl2-ttf-dev \
+            libportmidi-dev \
+            libswscale-dev \
+            libavformat-dev \
+            libavcodec-dev \
+            zlib1g-dev \
+            libgstreamer1.0 \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            libpng-dev \
+            libjpeg-dev \
+            openjdk-17-jdk \
+            zip \
+            unzip \
+            autoconf \
+            libtool \
+            pkg-config
+
+      - name: Install Buildozer
+        run: |
+          pip install --upgrade pip
+          pip install buildozer cython==0.29.36
 
       - name: Build APK with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
-        with:
-          command: buildozer android debug
-          buildozer_version: stable
+        run: |
+          yes | buildozer android debug
+        env:
+          ANDROID_SDK_ROOT: /opt/android-sdk
+          ANDROID_NDK_HOME: /opt/android-sdk/ndk
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: RTSP-Camera-APK
           path: bin/*.apk
 
       - name: Create Release
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: bin/*.apk
           tag_name: v1.0.${{ github.run_number }}
